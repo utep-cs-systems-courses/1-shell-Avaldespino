@@ -19,14 +19,16 @@ def main():
         else:
             os.write(1,("Wrong username\n").encode())
     
-    while(1):
+    while True:
         userInput = input(">>")
 
         if userInput.lower() == "exit":
             sys.exit(1)
         os.write(1,(userInput).encode())
         os.write(1,("\n").encode())
-    
+        execute_Command(userInput)
+
+
     
 def execute_Command(command):
     rc = os.fork()
@@ -35,12 +37,20 @@ def execute_Command(command):
         os.write(2,("Fork failed").encode())
         sys.exit(1)
     elif rc == 0:
-
-        os.write(1,("Fork worked").encode())
+        args = [command,"shell.py"]
+        for dir in re.split(":", os.environ['PATH']):
+            program = "%s/%s" % (dir,args[0])
+            
+            try:
+                os.execve(program,args,os.environ)
+            except FileNotFoundError:
+                pass
+        os.write(1,("Program Not found").encode())
+        sys.exit(1)
     else:
 
         waitForChild = os.wait()
-        os.write(1,("Done waiting\n").encode())
+        #os.write(1,("Done waiting\n").encode())
 
 
 
