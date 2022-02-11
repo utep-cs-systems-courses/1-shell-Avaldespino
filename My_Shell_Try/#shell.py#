@@ -5,7 +5,7 @@ import os, sys, time, re
 def main():
     pid = os.getpid()
     fdOut = os.open("shell-output.txt", os.O_CREAT | os.O_WRONLY)
-    fdIn = os.read(0,10000)
+    
         
     while True:
         os.write(1,(os.getcwd()).encode())
