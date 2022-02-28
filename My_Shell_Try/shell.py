@@ -44,7 +44,7 @@ def execute_Command(command):
             
             args.remove(">")
             os.close(1)                 # redirect child's stdout
-            os.open("p4-output.txt", os.O_CREAT | os.O_WRONLY);
+            os.open(args[1], os.O_CREAT | os.O_WRONLY);
             os.set_inheritable(1, True)
             args = args[0]
             args = args.split()
