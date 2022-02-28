@@ -26,7 +26,7 @@ def get_Input():
 
 def main():
     pid = os.getpid()
-    fdOut = os.open("shell-output.txt", os.O_CREAT | os.O_WRONLY)
+    
     get_Input()
 
   
@@ -40,8 +40,15 @@ def execute_Command(command):
         sys.exit(1)
     elif rc == 0:
         args = command.split()
-        
-        
+        if ">" in args:
+            
+            args.remove(">")
+            os.close(1)                 # redirect child's stdout
+            os.open("p4-output.txt", os.O_CREAT | os.O_WRONLY);
+            os.set_inheritable(1, True)
+            args = args[0]
+            args = args.split()
+            
         for dir in re.split(":", os.environ['PATH']):
             program = "%s/%s" % (dir,args[0])
             
