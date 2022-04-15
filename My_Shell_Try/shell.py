@@ -15,16 +15,23 @@ def get_Input():
             sys.exit(1)
         os.write(2,(fdIn).encode())
         os.write(2,("\n").encode())
-        #fdIn = fdIn.replace("\n","")
-        #fdIn = re.split(' ',fdIn)
+        
         change = fdIn.split()
         if change[0] == "cd":
             change_Dir(change[1])
         else:
-            execute_Command(fdIn)
+            if "|" in change:
+                pipe(fdIn)
+            else:
+                execute_Command(fdIn)
 #parse out string to pass out input to both childs
 def pipe(args):
     pr,pw = os.pipe()
+    args = args.split()
+    out = args.pop()
+    args.pop()
+    entrance = args.pop()
+
     for f in (pr,pw):
         os.set_inheritable(f,True)
 
@@ -33,14 +40,13 @@ def pipe(args):
         os.write(2,("Fork failed").encode())
         sys.exit(1)
     elif rc == 0:
-        args = command.split()
         os.close(1)
         os.dup(pw)
         for dir in re.split(":", os.environ['PATH']):
-            program = "%s/%s" % (dir,args[0])
+            program = "%s/%s" % (dir,entrance)
             
             try:
-                os.execve(program,args,os.environ)
+                os.execve(program,entrance,os.environ)
             except FileNotFoundError:
                 pass
         os.write(2,("Program Not found").encode())
@@ -53,14 +59,14 @@ def pipe(args):
         os.write(2,("Fork failed").encode())
         sys.exit(1)
     elif rc2 == 0:
-        args = command.split()
+        
         os.close(0)
         os.dup(pr)
         for dir in re.split(":", os.environ['PATH']):
-            program = "%s/%s" % (dir,args[0])
+            program = "%s/%s" % (dir,out)
             
             try:
-                os.execve(program,args,os.environ)
+                os.execve(program,out,os.environ)
             except FileNotFoundError:
                 pass
         os.write(2,("Program Not found").encode())
@@ -105,7 +111,7 @@ def redirect_input(args):
         os.set_inheritable(0, True)
         args = args[0]
         args = args.split()
-        execute_Command(args)  
+        return args
 
     
 def execute_Command(command):
@@ -116,7 +122,10 @@ def execute_Command(command):
         sys.exit(1)
     elif rc == 0:
         args = command.split()
-            
+        if "<" in args:
+            args = redirect_input(args)
+        if ">" in args:
+            args = redirect_output(args)
         for dir in re.split(":", os.environ['PATH']):
             program = "%s/%s" % (dir,args[0])
             
